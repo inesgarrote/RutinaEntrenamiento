@@ -1,19 +1,13 @@
 package com.example.rutinaentrenamiento.ui
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -23,68 +17,66 @@ import androidx.navigation.NavController
 import com.example.rutinaentrenamiento.R
 
 @Composable
-fun MainScreen(navController: NavController) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Color(0xFFf6e8ea)
-            ),
-        contentAlignment = Alignment.Center
-    ) {
+fun MainScreen(navController: NavController,   btManager: BluetoothManager) {
+    Box(    modifier = Modifier
+        .fillMaxSize()
+        .padding(horizontal = 32.dp),
+        contentAlignment = Alignment.Center) {
+        // 1) TÍTULO
+        Text(
+            text = "Rutina de entrenamiento",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF031966),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 120.dp)
+                .fillMaxWidth()
+        )
+        // 2) BLOQUE CENTRAL (imagen + mensaje)
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 32.dp, vertical = 100.dp),
+                .align(Alignment.Center)
+                .padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Rutina de entrenamiento",
-                color = Color(0xFF264653),
-                fontSize = 40.sp,
-                lineHeight = 50.sp, // Ajusta el interlineado
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 50.dp, bottom = 100.dp)
-
-            )
-
-
             Image(
-                painter = painterResource(id = R.drawable.rux_principal),
-                contentDescription = "Imagen de entrenamiento",
+                painter = painterResource(R.drawable.rux_principal),
+                contentDescription = null,
                 modifier = Modifier.size(250.dp)
-                    .align(Alignment.CenterHorizontally)
             )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
+            Spacer(modifier = Modifier.height(50.dp))
             Text(
                 text = "¡Entrena con Rux para tener una vida más saludable!",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF264653),
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 100.dp, bottom = 24.dp)
-
+                modifier = Modifier.fillMaxWidth()
             )
+        }
+        // 3) BOTÓN
+        Button(
+            onClick = {
+                // 1) enviamos primero el comando de selección
+                btManager.sendCommand("SELECTION")
+                // 2) y luego navegamos
+                navController.navigate("routine_selection")
+            },
+            shape = RoundedCornerShape(25.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF031966 ),    // azul a medida
+                contentColor   = Color.White           // texto en blanco
+            ),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 100.dp)
+                .fillMaxWidth(0.6f)
+                .height(60.dp)
 
-            Button(
-                onClick = { navController.navigate("routine_selection") },
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7f95d1)),
-                modifier = Modifier
-                    .padding(16.dp)
-                    .size(width = 220.dp, height = 60.dp)
-                    .shadow(8.dp, shape = RoundedCornerShape(50))
-            ) {
-                Text(
-                    text = "EMPEZAR AHORA",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
+        ) {
+            Text("Empezar ahora", fontSize = 20.sp)
         }
     }
 }

@@ -7,17 +7,14 @@ plugins {
 android {
     namespace = "com.example.rutinaentrenamiento"
     compileSdk = 35
-
     defaultConfig {
         applicationId = "com.example.rutinaentrenamiento"
         minSdk = 29
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -52,7 +49,6 @@ dependencies {
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
 
-
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -62,6 +58,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui.compose)
     implementation(libs.androidx.media3.ui)
-
 }

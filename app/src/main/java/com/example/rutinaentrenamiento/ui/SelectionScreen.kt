@@ -1,6 +1,7 @@
 package com.example.rutinaentrenamiento.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -9,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -18,18 +20,16 @@ import androidx.navigation.NavController
 import com.example.rutinaentrenamiento.R
 
 @Composable
-fun RoutineSelectionScreen(navController: NavController) {
+fun RoutineSelectionScreen(navController: NavController, btManager: BluetoothManager) {
     val routines = listOf(
-        Routine("Movilidad Articular", "Prepara el cuerpo para el ejercicio con movimientos suaves, además de mejorar la flexibilidad y prevenir lesiones.", R.drawable.portada),
-        Routine("Fortalecimiento de Piernas", "Ejercicios para fortalecer tus piernas.", R.drawable.portada),
-        Routine("Ejercicios para brazos", "Entrenamiento para fortalecer brazos y mejorar movilidad.", R.drawable.portada),
-        Routine("Equilibrio y Estabilidad", "Ejercicios para trabajar el equilibrio y prevenir caídas.", R.drawable.portada),
-        Routine("Relajación y Estiramiento", "Ejercicios suaves para relajar y mejorar elasticidad.", R.drawable.portada),
-        Routine("Ejercicio Completo", "Una rutina que combina movilidad, fuerza y relajación.", R.drawable.portada)
+        Routine("Movilidad Articular", "Prepara el cuerpo para el ejercicio con movimientos suaves, además de mejorar la flexibilidad y prevenir lesiones.", R.drawable.movilidad_portada),
+        Routine("Fortalecimiento de Piernas", "Ejercicios para fortalecer tus piernas.", R.drawable.piernas_portada),
+        Routine("Ejercicios para brazos", "Entrenamiento para fortalecer brazos y mejorar movilidad.", R.drawable.brazos_portada),
+        Routine("Equilibrio y Estabilidad", "Ejercicios para trabajar el equilibrio y prevenir caídas.", R.drawable.equilibrio_estabilidad_portada),
+        Routine("Relajación y Estiramiento", "Ejercicios suaves para relajar y mejorar elasticidad.", R.drawable.relajacion_estiramiento_portada),
+        Routine("Ejercicio Completo", "Una rutina que combina movilidad, fuerza y relajación.", R.drawable.ejercicio_completo)
     )
-
     val pagerState = rememberPagerState(pageCount = { routines.size })
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -41,10 +41,9 @@ fun RoutineSelectionScreen(navController: NavController) {
             text = "Selecciona tu Rutina",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
+            color = Color(0xFF031966),
             modifier = Modifier.padding(top = 50.dp)
         )
-
         HorizontalPager(
             state = pagerState,
             modifier = Modifier
@@ -53,36 +52,45 @@ fun RoutineSelectionScreen(navController: NavController) {
             pageSpacing = 16.dp, //  espaciado entre páginas
         ) { page ->
             Box(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 RoutineCard(routine = routines[page])
             }
         }
-
         Button(
             onClick = {
-                val selectedRoutine = routines[pagerState.currentPage]
-                when (selectedRoutine.name) {
-                    "Movilidad Articular" -> navController.navigate("movilidad_articular")
-                    "Fortalecimiento de Piernas" -> navController.navigate("piernas")
-                    "Ejercicios para brazos" -> navController.navigate("brazos")
-                    "Equilibrio y Estabilidad" -> navController.navigate("equilibrio")
-                    "Relajación y Estiramiento" -> navController.navigate("relajacion")
-                    "Ejercicio Completo" -> navController.navigate("ejercicio_completo")
-                    else -> navController.navigate("routine_detail/${selectedRoutine.name}")
+                val sel = routines[pagerState.currentPage]
+                // 1) Comandos enviados por bluetooth
+                val cmdId = when (sel.name) {
+                    "Movilidad Articular"       -> "MOVILIDAD_DETAIL"
+                    "Fortalecimiento de Piernas"-> "PIERNAS_DETAIL"
+                    "Ejercicios para brazos"    -> "BRAZOS_DETAIL"
+                    "Equilibrio y Estabilidad"  -> "EQUILIBRIO_DETAIL"
+                    "Relajación y Estiramiento" -> "RELAX_DETAIL"
+                    "Ejercicio Completo"        -> "COMPLETO_DETAIL"
+                    else                        -> sel.name.uppercase().replace(" ", "_")
                 }
+                // 2) Envía por Bluetooth
+                btManager.sendCommand(cmdId)
+                // 3) Navega a la pantalla correspondiente
+                navController.navigate("routine_detail/${sel.name}")
             },
             shape = RoundedCornerShape(25.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF031966 ),    // azul a medida
+                contentColor   = Color.White           // texto en blanco
+            ),
             modifier = Modifier
                 .fillMaxWidth(0.6f)
                 .height(60.dp)
+
         ) {
             Text("Iniciar rutina", fontSize = 20.sp)
         }
     }
 }
-
 
 // Modelo de datos para las rutinas
 data class Routine(val name: String, val description: String, val image: Int)
@@ -93,6 +101,9 @@ fun RoutineCard(routine: Routine) {
     Card(
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFdbe2fa)  // el color de fondo que tú quieras
+        ),
         modifier = Modifier
             .padding(16.dp)
             .size(300.dp, 400.dp)
