@@ -1,7 +1,6 @@
 package com.example.rutinaentrenamiento.ui
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -11,59 +10,123 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.rutinaentrenamiento.R
 
 @Composable
-fun RoutineSelectionScreen(navController: NavController, btManager: BluetoothManager) {
+fun RoutineSelectionScreen(
+    navController: NavController,
+    btManager: BluetoothManager
+) {
+    // Medir ancho/alto en dp
+    val config    = LocalConfiguration.current
+    val screenWdp = config.screenWidthDp.toFloat()
+    val screenHdp = config.screenHeightDp.toFloat()
+
+    // ¿Tablet o móvil?
+    val isTablet = screenWdp >= 600f
+
+    // Factores distintos según dispositivo
+    val horizFrac     = if (isTablet) 0.85f else 0.90f
+    val vertPadFrac   = if (isTablet) 0.12f else 0.10f
+    val titleSpFrac   = if (isTablet) 0.06f else 0.08f
+    val titleCardFrac = if (isTablet) 0.05f else 0.065f
+    val descSpFrac    = if (isTablet) 0.035f else 0.05f
+    val buttonSpFrac  = if (isTablet) 0.05f else 0.06f
+    val buttonHFrac   = if (isTablet) 0.08f else 0.10f
+    val cardWFrac     = if (isTablet) 0.70f else 0.85f
+    val imageFrac     = if (isTablet) 0.60f else 0.75f
+    val spacerSmallH  = if (isTablet) 0.02f else 0.015f
+
+    // Convertir a dp / sp
+    val horizPadDp   = ((1 - horizFrac) / 2 * screenWdp).dp
+    val vertPadDp    = (screenHdp * vertPadFrac).dp
+    val btnHeightDp  = (screenHdp * buttonHFrac).dp
+
+    val titleFontSp  = (screenWdp * titleSpFrac).sp
+    val titleCardSp  = (screenWdp * titleCardFrac).sp
+    val descFontSp   = (screenWdp * descSpFrac).sp
+    val btnFontSp    = (screenWdp * buttonSpFrac).sp
+
+    val cardWidthDp  = (screenWdp * cardWFrac).dp
+    val imageSizeDp  = (cardWidthDp.value * imageFrac).dp
+    val spacerDp     = (screenHdp * spacerSmallH).dp
+
+    // rutinas
     val routines = listOf(
-        Routine("Movilidad Articular", "Prepara el cuerpo para el ejercicio con movimientos suaves, además de mejorar la flexibilidad y prevenir lesiones.", R.drawable.movilidad_portada),
-        Routine("Fortalecimiento de Piernas", "Ejercicios para fortalecer tus piernas.", R.drawable.piernas_portada),
-        Routine("Ejercicios para brazos", "Entrenamiento para fortalecer brazos y mejorar movilidad.", R.drawable.brazos_portada),
-        Routine("Equilibrio y Estabilidad", "Ejercicios para trabajar el equilibrio y prevenir caídas.", R.drawable.equilibrio_estabilidad_portada),
-        Routine("Relajación y Estiramiento", "Ejercicios suaves para relajar y mejorar elasticidad.", R.drawable.relajacion_estiramiento_portada),
-        Routine("Ejercicio Completo", "Una rutina que combina movilidad, fuerza y relajación.", R.drawable.ejercicio_completo)
+        Routine("Movilidad Articular",
+            "Movimientos suaves para preparar tu cuerpo, aumentar flexibilidad y prevenir lesiones.",
+            R.drawable.movilidad_portada),
+        Routine("Fortalecimiento de Piernas",
+            "Ejercicios para fortalecer tus piernas.",
+            R.drawable.piernas_portada),
+        Routine("Ejercicios para brazos",
+            "Entrenamiento para fortalecer brazos y mejorar movilidad.",
+            R.drawable.brazos_portada),
+        Routine("Equilibrio y Estabilidad",
+            "Ejercicios para trabajar el equilibrio y prevenir caídas.",
+            R.drawable.equilibrio_estabilidad_portada),
+        Routine("Relajación y Estiramiento",
+            "Ejercicios suaves para relajar y mejorar elasticidad.",
+            R.drawable.relajacion_estiramiento_portada),
+        Routine("Ejercicio Completo",
+            "Una rutina que combina movilidad, fuerza y relajación.",
+            R.drawable.ejercicio_completo)
     )
     val pagerState = rememberPagerState(pageCount = { routines.size })
+
     Column(
-        modifier = Modifier
+        Modifier
             .fillMaxSize()
-            .padding(horizontal = 32.dp, vertical = 100.dp),
+            .padding(horizontal = horizPadDp, vertical = vertPadDp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
+        // Título
         Text(
-            text = "Selecciona tu Rutina",
-            fontSize = 32.sp,
+            "Selecciona tu Rutina",
+            fontSize   = titleFontSp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF031966),
-            modifier = Modifier.padding(top = 50.dp)
+            color      = Color(0xFF031966),
+            textAlign  = TextAlign.Center,
+            modifier   = Modifier.fillMaxWidth()
         )
+        // Carrusel
         HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
+            state       = pagerState,
+            modifier    = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            pageSpacing = 16.dp, //  espaciado entre páginas
+            pageSpacing = spacerDp
         ) { page ->
             Box(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                RoutineCard(routine = routines[page])
+                RoutineCard(
+                    routine   = routines[page],
+                    widthDp   = cardWidthDp,
+                    imageSize = imageSizeDp,
+                    titleSp   = titleCardSp,
+                    descSp    = descFontSp,
+                    spacerDp  = spacerDp
+                )
             }
         }
+        // Botón
         Button(
             onClick = {
                 val sel = routines[pagerState.currentPage]
-                // 1) Comandos enviados por bluetooth
-                val cmdId = when (sel.name) {
+                val cmd = when (sel.name) {
                     "Movilidad Articular"       -> "MOVILIDAD_DETAIL"
                     "Fortalecimiento de Piernas"-> "PIERNAS_DETAIL"
                     "Ejercicios para brazos"    -> "BRAZOS_DETAIL"
@@ -72,68 +135,79 @@ fun RoutineSelectionScreen(navController: NavController, btManager: BluetoothMan
                     "Ejercicio Completo"        -> "COMPLETO_DETAIL"
                     else                        -> sel.name.uppercase().replace(" ", "_")
                 }
-                // 2) Envía por Bluetooth
-                btManager.sendCommand(cmdId)
-                // 3) Navega a la pantalla correspondiente
+                btManager.sendCommand(cmd)
                 navController.navigate("routine_detail/${sel.name}")
             },
-            shape = RoundedCornerShape(25.dp),
+            shape  = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF031966 ),    // azul a medida
-                contentColor   = Color.White           // texto en blanco
+                containerColor = Color(0xFF031966),
+                contentColor   = Color.White
             ),
             modifier = Modifier
-                .fillMaxWidth(0.6f)
-                .height(60.dp)
-
+                .fillMaxWidth(horizFrac)
+                .height(btnHeightDp)
         ) {
-            Text("Iniciar rutina", fontSize = 20.sp)
+            Text(
+                "Iniciar rutina",
+                fontSize   = btnFontSp,
+                textAlign  = TextAlign.Center,
+                modifier   = Modifier.fillMaxWidth()
+            )
         }
     }
 }
 
-// Modelo de datos para las rutinas
-data class Routine(val name: String, val description: String, val image: Int)
-
-// Composable para cada tarjeta del carrusel
 @Composable
-fun RoutineCard(routine: Routine) {
+fun RoutineCard(
+    routine   : Routine,
+    widthDp   : Dp,
+    imageSize : Dp,
+    titleSp   : TextUnit,
+    descSp    : TextUnit,
+    spacerDp  : Dp
+) {
     Card(
-        shape = RoundedCornerShape(20.dp),
+        modifier  = Modifier
+            .width(widthDp)
+            .wrapContentHeight(),
+        shape     = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFdbe2fa)  // el color de fondo que tú quieras
-        ),
-        modifier = Modifier
-            .padding(16.dp)
-            .size(300.dp, 400.dp)
+        colors    = CardDefaults.cardColors(containerColor = Color(0xFFdbe2fa))
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            Modifier
+                .padding(spacerDp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
         ) {
             Image(
-                painter = painterResource(id = routine.image),
-                contentDescription = routine.name,
-                modifier = Modifier.size(220.dp)
+                painter           = painterResource(id = routine.image),
+                contentDescription= routine.name,
+                modifier          = Modifier.size(imageSize),
+                contentScale      = ContentScale.Crop
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(spacerDp))
 
             Text(
-                text = routine.name,
-                fontSize = 22.sp,
+                routine.name,
+                fontSize   = titleSp,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                textAlign  = TextAlign.Center,
+                modifier   = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(Modifier.height(spacerDp / 2))
 
             Text(
-                text = routine.description,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center
+                routine.description,
+                fontSize   = descSp,
+                textAlign  = TextAlign.Center,
+                modifier   = Modifier.fillMaxWidth()
             )
         }
     }
 }
+// Modelo de datos
+data class Routine(val name: String, val description: String, val image: Int)

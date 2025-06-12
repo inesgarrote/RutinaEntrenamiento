@@ -9,14 +9,14 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -33,85 +33,116 @@ fun RoutineDetailScreen(
     navController: NavController,
     btManager: BluetoothManager
 ) {
-    val info = exerciseRoutines.first { it.name == routineName }
+    // 1) Obtenemos ancho y alto en dp
+    val config     = LocalConfiguration.current
+    val screenWdp  = config.screenWidthDp.toFloat()
+    val screenHdp  = config.screenHeightDp.toFloat()
+
+    // 2) Factores de layout
+    val horizFrac     = 0.85f   // 85% de ancho para contenido
+    val topPadFrac    = 0.12f   // 12% del alto hasta el título
+    val botPadFrac    = 0.10f   // 10% del alto hasta el botón
+    val btnHFrac      = 0.08f   // 8% de alto para el botón
+    val spacerFrac    = 0.02f   // 2% de alto entre secciones
+
+    // 3) Factores de texto y imagen
+    val titleSpFrac   = 24f  / 360f
+    val stepTitleFrac = 16f  / 360f
+    val stepSpFrac    = 14f  / 360f
+    val imageFrac     = 0.6f
+
+    // 4) Calculamos valores en dp / sp
+    val titleSp     = (screenWdp * titleSpFrac).sp
+    val stepTitleSp = (screenWdp * stepTitleFrac).sp
+    val stepSp      = (screenWdp * stepSpFrac).sp
+
+    val horizPadDp  = ((1 - horizFrac) / 2 * screenWdp).dp
+    val topPadDp    = (screenHdp * topPadFrac).dp
+    val botPadDp    = (screenHdp * botPadFrac).dp
+    val btnHeightDp = (screenHdp * btnHFrac).dp
+    val spacerDp    = (screenHdp * spacerFrac).dp
+
+    val imageSizeDp = (screenWdp * imageFrac).dp
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 32.dp),
+            .padding(horizontal = horizPadDp),
         contentAlignment = Alignment.Center
     ) {
-        // 1) TÍTULO arriba
+        // 1) TÍTULO
         Text(
-            text = info.name,
-            fontSize = 32.sp,
+            text       = routineName,
+            fontSize   = titleSp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF031966),
-            textAlign = TextAlign.Center,
-            modifier = Modifier
+            color      = Color(0xFF031966),
+            textAlign  = TextAlign.Center,
+            modifier   = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 120.dp)
+                .padding(top = topPadDp)
                 .fillMaxWidth()
         )
 
-        // 2) BLOQUE CENTRAL (imagen + listado)
+        // 2) BLOQUE CENTRAL
         Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier           = Modifier.align(Alignment.Center),
+            horizontalAlignment= Alignment.CenterHorizontally
         ) {
-            // Imagen rebotando
             BouncingRuxImage(
                 imageRes = R.drawable.rux_hablando,
-                modifier = Modifier
-                    .size(200.dp)
+                modifier = Modifier.size(imageSizeDp)
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Ejercicios:",
-                fontSize = 20.sp,
+                text       = "Ejercicios:",
+                fontSize   = stepTitleSp,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.fillMaxWidth()
+                textAlign  = TextAlign.Start,
+                modifier   = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(8.dp))
 
-            info.steps.forEach { step ->
-                Text(
-                    text = "• $step",
-                    fontSize = 18.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                )
-            }
+            Spacer(modifier = Modifier.height(spacerDp / 2))
+
+            exerciseRoutines
+                .first { it.name == routineName }
+                .steps
+                .forEach { step ->
+                    Text(
+                        text      = "• $step",
+                        fontSize  = stepSp,
+                        modifier  = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = spacerDp / 4)
+                    )
+                }
         }
 
-        // 3) BOTÓN abajo
+        // 3) BOTÓN
         Button(
             onClick = {
-                // envía primer comando y navega
-                info.btCommands.firstOrNull()?.let { btManager.sendCommand(it) }
-                navController.navigate("exercise/${info.name}")
+                val cmd = exerciseRoutines
+                    .first { it.name == routineName }
+                    .btCommands
+                    .firstOrNull()
+                cmd?.let { btManager.sendCommand(it) }
+                navController.navigate("exercise/$routineName")
             },
-            shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(
+            shape   = RoundedCornerShape(25.dp),
+            colors  = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF031966),
                 contentColor   = Color.White
             ),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 100.dp)
-                .fillMaxWidth(0.6f)
-                .height(60.dp)
+                .padding(bottom = botPadDp)
+                .fillMaxWidth(horizFrac)
+                .height(btnHeightDp)
         ) {
             Text(
-                text = "¡Vamos allá!",
-                fontSize = 20.sp,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
+                "¡Vamos allá!",
+                fontSize  = stepSp,
+                textAlign = TextAlign.Center,
+                modifier  = Modifier.fillMaxWidth()
             )
         }
     }
@@ -122,22 +153,20 @@ fun BouncingRuxImage(
     @DrawableRes imageRes: Int,
     modifier: Modifier = Modifier
 ) {
-    // 1) Crea una transición infinita
     val infiniteTransition = rememberInfiniteTransition()
-    // 2) Anima un desplazamiento vertical entre -16.dp y +16.dp
     val offsetY by infiniteTransition.animateFloat(
-        initialValue = -16f,
-        targetValue  = 16f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = FastOutSlowInEasing),
+        initialValue    = -16f,
+        targetValue     = 16f,
+        animationSpec   = infiniteRepeatable(
+            animation  = tween(durationMillis = 2000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         )
     )
 
     Image(
-        painter = painterResource(imageRes),
-        contentDescription = null,
-        modifier = modifier
-            .offset { IntOffset(x = 0, y = offsetY.roundToInt()) }
+        painter           = painterResource(imageRes),
+        contentDescription= null,
+        contentScale      = ContentScale.Fit,
+        modifier          = modifier.offset { IntOffset(0, offsetY.roundToInt()) }
     )
 }

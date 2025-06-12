@@ -24,7 +24,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         btManager = BluetoothManager(this)
 
         // 1) Pedir permisos y, si ya los tienes, conectar
@@ -33,12 +32,13 @@ class MainActivity : ComponentActivity() {
             // Ya tienes todos los permisos: conecta
             startBluetoothConnect()
         }
-
         // 2) Levantar la UI
         setContent {
                 val navController = rememberNavController()
                 Navigation(navController, btManager)
         }
+
+
     }
 
     private fun startBluetoothConnect() {
@@ -62,18 +62,37 @@ class MainActivity : ComponentActivity() {
      * Solicita permisos necesarios y devuelve la lista
      * de los que faltan por conceder.
      */
+//    private fun requestPermissionsIfNeeded(): List<String> {
+//        val perms = mutableListOf(
+//            Manifest.permission.ACCESS_FINE_LOCATION,
+//            Manifest.permission.ACCESS_COARSE_LOCATION,
+//            Manifest.permission.BLUETOOTH,
+//            Manifest.permission.BLUETOOTH_ADMIN
+//        )
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+//            perms += Manifest.permission.BLUETOOTH_CONNECT
+//            perms += Manifest.permission.BLUETOOTH_SCAN
+//        }
+//        // Filtramos los que NO estén concedidos
+//        val toRequest = perms.filter {
+//            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+//        }
+//        if (toRequest.isNotEmpty()) {
+//            ActivityCompat.requestPermissions(this, toRequest.toTypedArray(), PERM_REQUEST)
+//        }
+//        return toRequest
+//    }
     private fun requestPermissionsIfNeeded(): List<String> {
+        Log.d(TAG, "Runtime SDK_INT = ${Build.VERSION.SDK_INT}")
         val perms = mutableListOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.BLUETOOTH,
-            Manifest.permission.BLUETOOTH_ADMIN
+            Manifest.permission.ACCESS_COARSE_LOCATION
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             perms += Manifest.permission.BLUETOOTH_CONNECT
             perms += Manifest.permission.BLUETOOTH_SCAN
         }
-        // Filtramos los que NO estén concedidos
+
         val toRequest = perms.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
@@ -82,7 +101,6 @@ class MainActivity : ComponentActivity() {
         }
         return toRequest
     }
-
     /**
      * Recibimos aquí el resultado de la petición de permisos.
      * Si ya están todos concedidos, lanzamos la conexión.
@@ -106,7 +124,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
     override fun onDestroy() {
         super.onDestroy()
         btManager.close()

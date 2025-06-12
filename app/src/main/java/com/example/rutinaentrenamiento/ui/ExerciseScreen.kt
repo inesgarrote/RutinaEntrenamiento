@@ -2,7 +2,6 @@ package com.example.rutinaentrenamiento.ui
 
 import android.net.Uri
 import android.widget.MediaController
-import android.widget.Toast
 import android.widget.VideoView
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,54 +26,75 @@ fun ExerciseScreen(
     navController: NavController,
     btManager: BluetoothManager
 ) {
-    val context = LocalContext.current
-    // Recuperamos la info de la rutina
-    val info = exerciseRoutines.first { it.name == routineName }
-
+    val context    = LocalContext.current
+    val info       = exerciseRoutines.first { it.name == routineName }
     var currentIndex by remember { mutableStateOf(0) }
-    // URI del vídeo actual
+    var videoViewRef by remember { mutableStateOf<VideoView?>(null) }
+
+    // Medimos ancho/alto en dp
+    val config    = LocalConfiguration.current
+    val screenWdp = config.screenWidthDp.toFloat()
+    val screenHdp = config.screenHeightDp.toFloat()
+
+    // Factores de layout y texto
+    val horizFrac    = 0.85f
+    val topPadFrac   = 0.08f
+    val botPadFrac   = 0.15f
+    val btnHFrac     = 0.08f
+    val spacerHFrac  = 0.03f
+
+    val titleSpFrac  = 30f  / 360f
+    val bodySpFrac   = 18f  / 360f
+
+    // Convertir a Dp/Sp
+    val titleSp      = (screenWdp * titleSpFrac).sp
+    val bodySp       = (screenWdp * bodySpFrac).sp
+
+    val horizPadDp   = ((1 - horizFrac)/2 * screenWdp).dp
+    val topPadDp     = (screenHdp * topPadFrac).dp
+    val botPadDp     = (screenHdp * botPadFrac).dp
+    val btnHeightDp  = (screenHdp * btnHFrac).dp
+    val spacerDp     = (screenHdp * spacerHFrac).dp
+
+    // URI del vídeo
     val currentUri by remember(currentIndex) {
         mutableStateOf(
             Uri.parse("android.resource://${context.packageName}/${info.videoResIds[currentIndex]}")
         )
     }
-
     Box(
-        modifier = Modifier
+        Modifier
             .fillMaxSize()
-            .padding(horizontal = 32.dp),
-        contentAlignment = Alignment.Center
+            .padding(horizontal = horizPadDp)
     ) {
-        // 1) TÍTULO arriba
+        // Título
         Text(
-            text = info.name,
-            fontSize = 32.sp,
+            text       = info.name,
+            fontSize   = titleSp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF031966),
-            textAlign = TextAlign.Center,
-            modifier = Modifier
+            color      = Color(0xFF031966),
+            textAlign  = TextAlign.Center,
+            modifier   = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 120.dp)
+                .padding(top = topPadDp)
                 .fillMaxWidth()
         )
 
-        // 2) BLOQUE CENTRAL (video + progreso + nombre del paso)
+        // Vídeo + info
         Column(
-            modifier = Modifier
+            Modifier
                 .align(Alignment.Center)
-                .padding(horizontal = 32.dp),
+                .fillMaxWidth()
+                .padding(horizontal = horizPadDp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Re-crea el VideoView cada vez que cambie currentIndex
             key(currentIndex) {
                 AndroidView(
                     factory = { ctx ->
                         VideoView(ctx).apply {
-
-                            val mc = MediaController(ctx)
-                            mc.setAnchorView(this)
+                            videoViewRef = this
+                            val mc = MediaController(ctx).apply { setAnchorView(this@apply) }
                             setMediaController(mc)
-                            // Carga y arranca
                             setVideoURI(currentUri)
                             setOnPreparedListener { start() }
                         }
@@ -84,65 +105,46 @@ fun ExerciseScreen(
                         .clip(RoundedCornerShape(20.dp))
                 )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Progreso
+            Spacer(Modifier.height(spacerDp))
             Text(
-                text = "Ejercicio ${currentIndex + 1} de ${info.videoResIds.size}",
-                style = MaterialTheme.typography.bodyMedium
+                text     = "Ejercicio ${currentIndex + 1} de ${info.videoResIds.size}",
+                fontSize = bodySp
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Nombre del paso actual
+            Spacer(Modifier.height(spacerDp))
             Text(
-                text = info.steps[currentIndex],
-                fontSize = 20.sp,
+                text       = info.steps[currentIndex],
+                fontSize   = bodySp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF264653),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                color      = Color(0xFF264653),
+                textAlign  = TextAlign.Center,
+                modifier   = Modifier.fillMaxWidth()
             )
         }
 
-        // 3) BOTÓN abajo
+        // Botón principal
         Button(
             onClick = {
-                // 1) Calcula el índice del comando (offset +1)
                 val cmdIdx = currentIndex + 1
-
-                // 2) Solo envía si está dentro de bounds
-                if (cmdIdx < info.btCommands.size) {
-                    btManager.sendCommand(info.btCommands[cmdIdx])
-                }
-
-                // Avanzar o terminar
-                if (currentIndex < info.videoResIds.lastIndex) {
-                    currentIndex++
-                } else {
-                    navController.navigate("routine_selection")
-                }
+                if (cmdIdx < info.btCommands.size) btManager.sendCommand(info.btCommands[cmdIdx])
+                if (currentIndex < info.videoResIds.lastIndex) currentIndex++
+                else navController.navigate("routine_selection")
             },
-            shape = RoundedCornerShape(25.dp),
+            shape  = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF031966),
                 contentColor   = Color.White
             ),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 100.dp)
-                .fillMaxWidth(0.6f)
-                .height(60.dp)
+                .padding(bottom = botPadDp)
+                .fillMaxWidth(horizFrac)
+                .height(btnHeightDp)
         ) {
             Text(
-                text = if (currentIndex < info.videoResIds.lastIndex)
-                    "Siguiente ejercicio"
-                else
-                    "Finalizar",
-                fontSize = 20.sp,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
+                text      = if (currentIndex < info.videoResIds.lastIndex) "Siguiente ejercicio" else "Finalizar",
+                fontSize  = bodySp,
+                textAlign = TextAlign.Center,
+                modifier  = Modifier.fillMaxWidth()
             )
         }
     }

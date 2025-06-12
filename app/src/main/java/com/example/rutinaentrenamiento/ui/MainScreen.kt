@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -17,66 +19,101 @@ import androidx.navigation.NavController
 import com.example.rutinaentrenamiento.R
 
 @Composable
-fun MainScreen(navController: NavController,   btManager: BluetoothManager) {
-    Box(    modifier = Modifier
-        .fillMaxSize()
-        .padding(horizontal = 32.dp),
-        contentAlignment = Alignment.Center) {
+fun MainScreen(navController: NavController, btManager: BluetoothManager) {
+    // 1) Medimos ancho/alto en dp
+    val config    = LocalConfiguration.current
+    val screenWdp = config.screenWidthDp.toFloat()
+    val screenHdp = config.screenHeightDp.toFloat()
+
+    // 2) Detectamos móvil vs tablet
+    val isTablet = screenWdp >= 600f
+
+    // 3) Factores de layout adaptados
+    val horizFrac   = 0.85f
+    val topPadFrac  = if (isTablet) 0.08f else 0.12f
+    val botPadFrac  = if (isTablet) 0.08f else 0.12f
+    val btnHFrac    = 0.08f
+    val spacerHFrac = 0.04f
+
+    // 4) Factores de texto
+    val titleSpFrac = 24f  / 360f
+    val bodySpFrac  = 16f  / 360f
+
+    // 5) Convertimos a Dp / Sp
+    val titleSp    = (screenWdp * titleSpFrac).sp
+    val bodySp     = (screenWdp * bodySpFrac).sp
+
+    val horizPadDp = ((1 - horizFrac) / 2 * screenWdp).dp
+    val topPadDp   = (screenHdp * topPadFrac).dp
+    val botPadDp   = (screenHdp * botPadFrac).dp
+    val btnHeight  = (screenHdp * btnHFrac).dp
+    val spacerH    = (screenHdp * spacerHFrac).dp
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = horizPadDp)
+    ) {
         // 1) TÍTULO
         Text(
-            text = "Rutina de entrenamiento",
-            fontSize = 32.sp,
+            text       = "Rutina de entrenamiento",
+            fontSize   = titleSp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF031966),
-            textAlign = TextAlign.Center,
-            modifier = Modifier
+            color      = Color(0xFF031966),
+            textAlign  = TextAlign.Center,
+            modifier   = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 120.dp)
+                .padding(top = topPadDp)
                 .fillMaxWidth()
         )
-        // 2) BLOQUE CENTRAL (imagen + mensaje)
+
+        // 2) IMAGEN + TEXTO central
         Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(horizontal = 32.dp),
+            modifier            = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = painterResource(R.drawable.rux_principal),
+                painter        = painterResource(R.drawable.rux_principal),
                 contentDescription = null,
-                modifier = Modifier.size(250.dp)
+                contentScale   = ContentScale.Fit,
+                modifier       = Modifier
+                    .fillMaxWidth(horizFrac)
+                    .aspectRatio(1f)
             )
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(spacerH))
             Text(
-                text = "¡Entrena con Rux para tener una vida más saludable!",
-                fontSize = 20.sp,
+                text       = "¡Entrena con Rux para tener una vida más saludable!",
+                fontSize   = bodySp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF264653),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                color      = Color(0xFF264653),
+                textAlign  = TextAlign.Center,
+                modifier   = Modifier.fillMaxWidth()
             )
         }
-        // 3) BOTÓN
+
+        // 3) BOTÓN principal
         Button(
             onClick = {
-                // 1) enviamos primero el comando de selección
                 btManager.sendCommand("SELECTION")
-                // 2) y luego navegamos
                 navController.navigate("routine_selection")
             },
-            shape = RoundedCornerShape(25.dp),
+            shape  = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF031966 ),    // azul a medida
-                contentColor   = Color.White           // texto en blanco
+                containerColor = Color(0xFF031966),
+                contentColor   = Color.White
             ),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 100.dp)
-                .fillMaxWidth(0.6f)
-                .height(60.dp)
-
+                .padding(bottom = botPadDp)
+                .fillMaxWidth(horizFrac)
+                .height(btnHeight)
         ) {
-            Text("Empezar ahora", fontSize = 20.sp)
+            Text(
+                "Empezar ahora",
+                fontSize   = bodySp,
+                textAlign  = TextAlign.Center,
+                modifier   = Modifier.fillMaxWidth()
+            )
         }
     }
 }

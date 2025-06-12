@@ -16,7 +16,6 @@ fun Navigation(navController: NavHostController, btManager: BluetoothManager) {
         }
         // 2) Pantalla de selección de rutina
         composable("routine_selection") {
-
             RoutineSelectionScreen(navController, btManager)
         }
         // 3) Pantalla de introducción a la rutina
