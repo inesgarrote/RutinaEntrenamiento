@@ -109,7 +109,6 @@ class MainActivity : ComponentActivity() {
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
         if (requestCode == PERM_REQUEST) {
             // Verificamos que todos hayan sido concedidos
             val denied = grantResults.any { it != PackageManager.PERMISSION_GRANTED }
