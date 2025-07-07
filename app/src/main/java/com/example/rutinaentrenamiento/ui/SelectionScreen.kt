@@ -1,9 +1,12 @@
 package com.example.rutinaentrenamiento.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -119,6 +122,33 @@ fun RoutineSelectionScreen(
                     titleSp   = titleCardSp,
                     descSp    = descFontSp,
                     spacerDp  = spacerDp
+                )
+            }
+        }
+
+        // Indicadores de página
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding( bottom = 24.dp)
+        ) {
+            repeat(routines.size) { index ->
+                val isSelected = pagerState.currentPage == index
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .size(12.dp)
+                        .background(
+                            color = if (isSelected) Color.Black else Color.Transparent,
+                            shape = CircleShape
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color.Black,
+                            shape = CircleShape
+                        )
                 )
             }
         }
